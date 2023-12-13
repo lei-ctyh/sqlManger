@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'sqlManger.ui'
+# Form implementation generated from reading ui file 'sqlManger_ui.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -18,7 +18,7 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 0, 621, 73))
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 0, 621, 51))
         self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
@@ -50,23 +50,8 @@ class Ui_MainWindow(object):
         self.pushButton = QtWidgets.QPushButton(self.horizontalLayoutWidget)
         self.pushButton.setObjectName("pushButton")
         self.horizontalLayout.addWidget(self.pushButton)
-        self.horizontalLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
-        self.horizontalLayoutWidget_2.setGeometry(QtCore.QRect(10, 80, 621, 80))
-        self.horizontalLayoutWidget_2.setObjectName("horizontalLayoutWidget_2")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget_2)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.label_5 = QtWidgets.QLabel(self.horizontalLayoutWidget_2)
-        self.label_5.setObjectName("label_5")
-        self.horizontalLayout_2.addWidget(self.label_5)
-        self.textEdit = QtWidgets.QTextEdit(self.horizontalLayoutWidget_2)
-        self.textEdit.setObjectName("textEdit")
-        self.horizontalLayout_2.addWidget(self.textEdit)
-        self.pushButton_2 = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.horizontalLayout_2.addWidget(self.pushButton_2)
         self.tableView = QtWidgets.QTableView(self.centralwidget)
-        self.tableView.setGeometry(QtCore.QRect(10, 180, 621, 201))
+        self.tableView.setGeometry(QtCore.QRect(10, 100, 621, 281))
         self.tableView.setObjectName("tableView")
         self.horizontalLayoutWidget_3 = QtWidgets.QWidget(self.centralwidget)
         self.horizontalLayoutWidget_3.setGeometry(QtCore.QRect(10, 390, 621, 61))
@@ -91,6 +76,21 @@ class Ui_MainWindow(object):
         self.pushButton_4 = QtWidgets.QPushButton(self.horizontalLayoutWidget_3)
         self.pushButton_4.setObjectName("pushButton_4")
         self.horizontalLayout_3.addWidget(self.pushButton_4)
+        self.label_5 = QtWidgets.QLabel(self.centralwidget)
+        self.label_5.setGeometry(QtCore.QRect(10, 50, 91, 41))
+        self.label_5.setObjectName("label_5")
+        self.label_7 = QtWidgets.QLabel(self.centralwidget)
+        self.label_7.setGeometry(QtCore.QRect(300, 60, 41, 21))
+        self.label_7.setObjectName("label_7")
+        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox.setGeometry(QtCore.QRect(40, 60, 251, 22))
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox_2.setGeometry(QtCore.QRect(340, 60, 211, 22))
+        self.comboBox_2.setObjectName("comboBox_2")
+        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_2.setGeometry(QtCore.QRect(560, 60, 75, 23))
+        self.pushButton_2.setObjectName("pushButton_2")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -107,11 +107,12 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "用户名"))
         self.label_4.setText(_translate("MainWindow", "密码"))
         self.pushButton.setText(_translate("MainWindow", "连接"))
-        self.label_5.setText(_translate("MainWindow", "SQL脚本"))
-        self.pushButton_2.setText(_translate("MainWindow", "执行"))
         self.label_6.setText(_translate("MainWindow", "/36页"))
         self.pushButton_3.setText(_translate("MainWindow", "上一页"))
         self.pushButton_4.setText(_translate("MainWindow", "下一页"))
+        self.label_5.setText(_translate("MainWindow", "库名"))
+        self.label_7.setText(_translate("MainWindow", "表名"))
+        self.pushButton_2.setText(_translate("MainWindow", "查询"))
 
 
 if __name__ == "__main__":

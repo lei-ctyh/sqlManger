@@ -25,24 +25,32 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>数据库类型</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit"/>
-     </item>
-     <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>连接名</string>
+        <string>主机</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="host">
+       <property name="text">
+        <string>localhost</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>端口号</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="port">
+       <property name="text">
+        <string>3306</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_3">
@@ -52,7 +60,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_3"/>
+      <widget class="QLineEdit" name="username">
+       <property name="text">
+        <string>root</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_4">
@@ -62,10 +74,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_4"/>
+      <widget class="QLineEdit" name="pwd">
+       <property name="text">
+        <string>1234</string>
+       </property>
+      </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="connbut">
        <property name="text">
         <string>连接</string>
        </property>
@@ -94,20 +110,24 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QLineEdit" name="lineEdit_5">
-       <property name="maximumSize">
-        <size>
-         <width>421</width>
-         <height>16777215</height>
-        </size>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>数据库类型</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>/36页</string>
-       </property>
+      <widget class="QComboBox" name="databasetype">
+       <item>
+        <property name="text">
+         <string>QMYSQL</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>QSQLLITE</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -118,16 +138,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="roolbackbut">
        <property name="text">
-        <string>上一页</string>
+        <string>回滚</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_4">
+      <widget class="QPushButton" name="commitbut">
        <property name="text">
-        <string>下一页</string>
+        <string>提交</string>
        </property>
       </widget>
      </item>
@@ -159,7 +179,7 @@
      <string>表名</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox">
+   <widget class="QComboBox" name="database">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -169,7 +189,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_2">
+   <widget class="QComboBox" name="tablename">
     <property name="geometry">
      <rect>
       <x>340</x>
@@ -179,7 +199,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="querybut">
     <property name="geometry">
      <rect>
       <x>560</x>

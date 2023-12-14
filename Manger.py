@@ -1,10 +1,12 @@
 import pymysql
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIntValidator
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
 
 from UpdateItemModel import UpdateItemModel
 from Utils import Utils
+from addrowdialog_ui import Ui_Dialog
 from sqlManger_ui import Ui_MainWindow
 
 
@@ -69,7 +71,6 @@ class Manger(QMainWindow):
                     Utils.show_msg(self, "请选择要查询的表格!")
                 else:
                     model = UpdateItemModel()
-                    model.dataChanged.connect(self.modify_data)
                     # 加载表头
                     cursor.execute(query_header_sql)
                     self.tab_header = []
@@ -148,11 +149,7 @@ class Manger(QMainWindow):
         action = menu.exec(screen_pos)
 
         if action == add_item:
-            row = []
-            for colInfo in self.tab_header:
-                col = QStandardItem()
-                row.append(col)
-            self.ui.tableView.model().appendRow(row)
+            self.insert_data()
         elif action == del_item:
             if row_index is not None:
                 self.delete_data()
@@ -162,7 +159,22 @@ class Manger(QMainWindow):
             return
 
     def insert_data(self):
-        print("插入数据")
+        Dialog = QtWidgets.QDialog()
+        ui = Ui_Dialog()
+        form_items = []
+        for colInfo in self.tab_header:
+            form_items.append(colInfo[0])
+        ui.setupUi(Dialog, form_items)
+        is_ok = Dialog.exec()
+        if is_ok == 0:
+            return
+        row = []
+        for colInfo in self.tab_header:
+            col_name = colInfo[0]
+            col_data = getattr(ui, f"lineEdit_{col_name}").text()
+            row.append(QStandardItem(str(col_data)))
+        self.ui.tableView.model().appendRow(row)
+        # TODO 保存数据
 
     def delete_data(self):
         # 删除数据
@@ -173,20 +185,3 @@ class Manger(QMainWindow):
             cursor.execute(del_sql)
         except Exception as e:
             Utils.show_msg(self, f"删除失败:{e}")
-
-    def modify_data(self):
-
-        # 修改数据
-        try:
-            row_data = []
-            for i in range(len(self.tab_header)):
-                row_data.append(self.ui.tableView.model().item(self.ui.tableView.currentIndex().row(), i).text())
-
-            sql_s_list = Utils.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), row_data, "edit")
-
-            cursor = Utils.get_cursor()
-            print(sql_s_list)
-            cursor.execute(sql_s_list[0], sql_s_list[1])
-        except Exception as e:
-            Utils.show_msg(self, f"修改失败:{e}")
-            self.execute_query()

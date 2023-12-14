@@ -1,8 +1,11 @@
+import datetime
+
 import pymysql
 from PyQt5.QtWidgets import QMessageBox
 
 
 class Utils(object):
+    manger = None
     connection = None
     cursor = None
     """
@@ -106,9 +109,15 @@ class Utils(object):
         elif data_type == 'float':
             return float(data)
         elif data_type == 'datetime':
-            return data.strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                return datetime.datetime.strptime(data, '%Y-%m-%d %H:%M:%S')
+            # 捕获日期格式化异常""
+            except ValueError:
+                raise Exception(f'输入日期格式异常，正确示例: 2020-01-01 12:12:12')                # except Exception as e:
+
         elif data_type == 'timestamp':
-            return data.strftime('%Y-%m-%d %H:%M:%S')
+            return datetime.datetime.now()
+
         else:
             return data
 

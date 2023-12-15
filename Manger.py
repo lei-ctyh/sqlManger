@@ -1,8 +1,10 @@
 import pymysql
+import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIntValidator
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
+from qdarkstyle import LightPalette, DarkPalette
 
 from UpdateItemModel import UpdateItemModel
 from Utils import Utils
@@ -37,7 +39,10 @@ class Manger(QMainWindow):
         self.ui.roolbackbut.clicked.connect(self.rollback_database)
         self.ui.commitbut.clicked.connect(self.commit_database)
         self.ui.database.currentIndexChanged.connect(self.change_database)
+        # 更改主题
+        self.ui.themeComboBox.currentIndexChanged.connect(self.change_theme)
 
+        # 右键菜单
         self.ui.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tableView.customContextMenuRequested.connect(self.display_table_menu)
 
@@ -200,3 +205,11 @@ class Manger(QMainWindow):
             self.ui.tableView.model().removeRow(row_index)
         except Exception as e:
             Utils.show_msg(self, f"删除失败:{e}")
+
+
+    def change_theme(self):
+        if self.ui.themeComboBox.currentText() == "Dark":
+            Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=DarkPalette()))
+        else:
+            Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=LightPalette()))
+

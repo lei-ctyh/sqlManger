@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 class Utils(object):
+    app = None
     manger = None
     connection = None
     cursor = None
@@ -163,3 +164,11 @@ class Utils(object):
     @staticmethod
     def set_manger_self(self):
         Utils.manger = self
+
+    @staticmethod
+    def get_app_self():
+        return Utils.app
+
+    @staticmethod
+    def set_app_self(self):
+        Utils.app = self

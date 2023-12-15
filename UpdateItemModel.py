@@ -20,10 +20,9 @@ class UpdateItemModel(QStandardItemModel):
                     manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
 
             sql_s_list = Utils.get_sql_and_list(manger_self.tab_header, manger_self.ui.tablename.currentText(),
-                                                row_data, "edit")
-            print(old_data)
-            print(row_data)
+                                                row_data,old_data, "edit")
             cursor = Utils.get_cursor()
+            print("修改数据")
             print(sql_s_list)
             cursor.execute(sql_s_list[0], sql_s_list[1])
         except Exception as e:
@@ -32,3 +31,5 @@ class UpdateItemModel(QStandardItemModel):
             return super().setData(index, index.data(), role)
 
         return super().setData(index, value, role)
+
+

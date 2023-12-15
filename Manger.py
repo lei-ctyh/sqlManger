@@ -152,36 +152,51 @@ class Manger(QMainWindow):
             self.insert_data()
         elif action == del_item:
             if row_index is not None:
-                self.delete_data()
-                self.ui.tableView.model().removeRow(row_index)
+                self.delete_data(row_index)
 
         else:
             return
 
     def insert_data(self):
-        Dialog = QtWidgets.QDialog()
-        ui = Ui_Dialog()
-        form_items = []
-        for colInfo in self.tab_header:
-            form_items.append(colInfo[0])
-        ui.setupUi(Dialog, form_items)
-        is_ok = Dialog.exec()
-        if is_ok == 0:
-            return
-        row = []
-        for colInfo in self.tab_header:
-            col_name = colInfo[0]
-            col_data = getattr(ui, f"lineEdit_{col_name}").text()
-            row.append(QStandardItem(str(col_data)))
-        self.ui.tableView.model().appendRow(row)
-        # TODO 保存数据
+        try:
+            Dialog = QtWidgets.QDialog()
+            ui = Ui_Dialog()
+            form_items = []
+            for colInfo in self.tab_header:
+                form_items.append(colInfo[0])
+            ui.setupUi(Dialog, form_items)
+            is_ok = Dialog.exec()
+            if is_ok == 0:
+                return
+            row = []
+            row_data = []
+            for colInfo in self.tab_header:
+                col_name = colInfo[0]
+                col_data = getattr(ui, f"lineEdit_{col_name}").text()
+                row_data.append(col_data)
+                row.append(QStandardItem(str(col_data)))
+            sql_and_list = Utils.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), row_data, [],
+                                                  "add")
+            cursor = Utils.get_cursor()
+            print("插入数据")
+            print(sql_and_list)
+            cursor.execute(sql_and_list[0], sql_and_list[1])
+            self.ui.tableView.model().appendRow(row)
+            Utils.show_msg(self, "保存成功!")
+        except Exception as e:
+            Utils.show_msg(self, f"保存失败:{e}")
 
-    def delete_data(self):
+    def delete_data(self, row_index):
         # 删除数据
         try:
+            old_data = []
+            for i in range(len(self.tab_header)):
+                old_data.append(self.ui.tableView.model().item(self.ui.tableView.currentIndex().row(), i).text())
+            sql_and_list = Utils.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), [], old_data, "del")
             cursor = Utils.get_cursor()
-            del_sql = f"delete from `{self.ui.tablename.currentText()}` where id = {self.ui.tableView.currentIndex().row()}"
-            print(del_sql)
-            cursor.execute(del_sql)
+            print("删除数据")
+            print(sql_and_list)
+            cursor.execute(sql_and_list[0], sql_and_list[1])
+            self.ui.tableView.model().removeRow(row_index)
         except Exception as e:
             Utils.show_msg(self, f"删除失败:{e}")

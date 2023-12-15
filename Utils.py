@@ -138,9 +138,9 @@ class Utils(object):
 
     @staticmethod
     def deal_data(data, data_type):
-        if data is None:
-            return ''
-        elif data_type == 'int':
+        if data == '':
+            return None
+        if data_type == 'int':
             return int(data)
         elif data_type == 'float':
             return float(data)
@@ -153,7 +153,14 @@ class Utils(object):
 
         elif data_type == 'timestamp':
             return datetime.datetime.now()
-
+        elif data_type == 'date':
+            try:
+                if data == '':
+                    return None
+                return datetime.datetime.strptime(data, '%Y-%m-%d')
+            # 捕获日期格式化异常""
+            except ValueError:
+                raise Exception(f'输入日期格式异常，正确示例: 2020-01-01')
         else:
             return data
 

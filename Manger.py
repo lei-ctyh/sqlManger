@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIntValidator
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
 from qdarkstyle import LightPalette, DarkPalette
+from qt_material import apply_stylesheet, list_themes
 
 from UpdateItemModel import UpdateItemModel
 from Utils import Utils
@@ -46,16 +47,23 @@ class Manger(QMainWindow):
         self.ui.database.currentIndexChanged.connect(self.change_database)
         # 更改主题
         self.ui.themeComboBox.currentIndexChanged.connect(self.change_theme)
+        # 动态加载qt-material主题美化包
+        for theme in list_themes():
+            self.ui.themeComboBox.addItem(theme.replace(".xml", ""))
+
         # 右键表格, 展示菜单
         self.ui.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tableView.customContextMenuRequested.connect(self.display_table_menu)
+
+        # 加载进度条设置为0
+        self.ui.progressBar.setValue(0)
 
     def conn_database(self):
         try:
             connection = Utils.get_connection(self)
             cursor = connection.cursor()
 
-            sql = "SHOW DATABASES"
+            sql = "SHOW DATABASES WHERE `Database` NOT IN ('information_schema', 'performance_schema','mysql', 'sys')"
             # 加载库结构
             if cursor.execute(sql):
                 result = cursor.fetchall()
@@ -89,7 +97,7 @@ class Manger(QMainWindow):
                     header = []
                     for col in cursor.fetchall():
                         self.tab_header.append(col)
-                        header.append(col[0])
+                        header.append(f"  {col[0]}  ")
                     model.setHorizontalHeaderLabels(header)
 
                     # 加载数据
@@ -106,7 +114,9 @@ class Manger(QMainWindow):
                         self.load_progress_bar(((index + 1) / len(result)) * 100)
 
                     self.ui.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-                    self.ui.tableView.setSortingEnabled(True)
+                    self.ui.tableView.setSortingEnabled(False)
+                    self.ui.tableView.setAlternatingRowColors(True)
+                    self.ui.tableView.verticalHeader().setVisible(False)
                     self.ui.tableView.setModel(model)
 
         except Exception as e:
@@ -125,8 +135,8 @@ class Manger(QMainWindow):
         try:
             # 切换数据库
             cur_database = self.ui.database.currentText()
+            # 数据库为空代表正在进行数据库连接, 无效切换数据库
             if cur_database == "":
-                Utils.show_msg(self, "请选择数据库!")
                 return
             connection = Utils.get_connection(self)
             connection.select_db(cur_database)
@@ -138,6 +148,9 @@ class Manger(QMainWindow):
                 result = cursor.fetchall()
                 for i in result:
                     self.ui.tablename.addItem(i[0])
+            # 清空tableView数据
+            self.ui.tableView.setModel(None)
+            self.load_progress_bar(0)
         except Exception as e:
             Utils.show_msg(self, f"切换数据库失败:{e}")
 
@@ -145,6 +158,13 @@ class Manger(QMainWindow):
         self.ui.progressBar.setProperty("value", progress)
 
     def display_table_menu(self, pos):
+        # 判断数据加载进度是否是100%
+        if self.ui.progressBar.value() == 0:
+            return
+        if self.ui.progressBar.value() != 100:
+            Utils.show_msg(self, "数据加载中, 请稍后再试!")
+            return
+
         # 获取当前行号
         row_index = None
         for i in self.ui.tableView.selectionModel().selection().indexes():
@@ -212,10 +232,10 @@ class Manger(QMainWindow):
         except Exception as e:
             Utils.show_msg(self, f"删除失败:{e}")
 
-
     def change_theme(self):
         if self.ui.themeComboBox.currentText() == "Dark":
             Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=DarkPalette()))
-        else:
+        elif self.ui.themeComboBox.currentText() == "Light":
             Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=LightPalette()))
-
+        else:
+            apply_stylesheet(Utils.get_app_self(), theme=self.ui.themeComboBox.currentText() + ".xml")

@@ -34,15 +34,19 @@ class Manger(QMainWindow):
         self.ui.port.setValidator(port_validator)
 
         # 连接槽函数
+        # 连接按钮
         self.ui.connbut.clicked.connect(self.conn_database)
+        # 查询按钮
         self.ui.querybut.clicked.connect(self.execute_query)
+        # 回滚按钮
         self.ui.roolbackbut.clicked.connect(self.rollback_database)
+        # 提交按钮
         self.ui.commitbut.clicked.connect(self.commit_database)
+        # 切换数据库选择
         self.ui.database.currentIndexChanged.connect(self.change_database)
         # 更改主题
         self.ui.themeComboBox.currentIndexChanged.connect(self.change_theme)
-
-        # 右键菜单
+        # 右键表格, 展示菜单
         self.ui.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tableView.customContextMenuRequested.connect(self.display_table_menu)
 
@@ -58,6 +62,9 @@ class Manger(QMainWindow):
                 self.ui.database.clear()
                 for i in result:
                     self.ui.database.addItem(i[0])
+
+            # 开启事务
+            cursor.execute("BEGIN")
             Utils.show_msg(self, "数据库链接成功!")
         except Exception as e:
             Utils.show_msg(self, f"数据库链接异常!{e}")
@@ -101,8 +108,7 @@ class Manger(QMainWindow):
                     self.ui.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
                     self.ui.tableView.setSortingEnabled(True)
                     self.ui.tableView.setModel(model)
-                    # 开启事务
-                    cursor.execute("BEGIN")
+
         except Exception as e:
             Utils.show_msg(self, f"查询失败:{e}")
 

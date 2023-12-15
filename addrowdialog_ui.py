@@ -19,26 +19,44 @@ class Ui_Dialog(object):
         self.add_row_but = QtWidgets.QDialogButtonBox(Dialog)
         self.add_row_but.setGeometry(QtCore.QRect(30, 260, 341, 32))
         self.add_row_but.setOrientation(QtCore.Qt.Horizontal)
-        self.add_row_but.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.add_row_but.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.add_row_but.setObjectName("add_row_but")
-        self.formLayoutWidget = QtWidgets.QWidget(Dialog)
-        self.formLayoutWidget.setGeometry(QtCore.QRect(40, 10, 331, 241))
-        self.formLayoutWidget.setObjectName("formLayoutWidget")
-        self.formLayout = QtWidgets.QFormLayout(self.formLayoutWidget)
-        self.formLayout.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea = QtWidgets.QScrollArea(Dialog)
+        self.scrollArea.setGeometry(QtCore.QRect(20, 10, 361, 241))
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 359, 239))
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.formLayout = QtWidgets.QFormLayout(self.scrollAreaWidgetContents)
         self.formLayout.setObjectName("formLayout")
+
         # 动态添加表单
         for i, item in enumerate(form_items):
-            setattr(self, f"label_{item}", QtWidgets.QLabel(self.formLayoutWidget))
+            setattr(self, f"label_{item}", QtWidgets.QLabel(self.scrollAreaWidgetContents))
             getattr(self, f"label_{item}").setObjectName(f"label_{item}")
-            self.formLayout.setWidget(i, QtWidgets.QFormLayout.LabelRole, getattr(self, f"label_{item}"))
-            setattr(self, f"lineEdit_{item}", QtWidgets.QLineEdit(self.formLayoutWidget))
+            self.formLayout.setWidget(i, QtWidgets.QFormLayout.LabelRole,  getattr(self, f"label_{item}"))
+            setattr(self, f"lineEdit_{item}", QtWidgets.QLineEdit(self.scrollAreaWidgetContents))
             getattr(self, f"lineEdit_{item}").setObjectName(f"lineEdit_{item}")
             self.formLayout.setWidget(i, QtWidgets.QFormLayout.FieldRole, getattr(self, f"lineEdit_{item}"))
 
+        # self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
+        # self.label.setObjectName("label")
+        # self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
+        # self.lineEdit = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        # self.lineEdit.setObjectName("lineEdit")
+        # self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
+        # self.label_2 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
+        # self.label_2.setObjectName("label_2")
+        # self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_2)
+        # self.lineEdit_2 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        # self.lineEdit_2.setObjectName("lineEdit_2")
+        # self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.retranslateUi(Dialog)
-        self.add_row_but.accepted.connect(Dialog.accept)  # type: ignore
-        self.add_row_but.rejected.connect(Dialog.reject)  # type: ignore
+        self.add_row_but.accepted.connect(Dialog.accept) # type: ignore
+        self.add_row_but.rejected.connect(Dialog.reject) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -50,7 +68,6 @@ class Ui_Dialog(object):
 
 if __name__ == "__main__":
     import sys
-
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()

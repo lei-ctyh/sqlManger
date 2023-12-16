@@ -1,34 +1,22 @@
 import datetime
 
 import pymysql
-from PyQt5.QtWidgets import QMessageBox
 
 
-class Utils(object):
-    app = None
-    manger = None
+class DbUtil(object):
     connection = None
     cursor = None
-    """
-    显示提示信息
-    self : 主窗口
-    msg : 信息
-    """
-
-    @staticmethod
-    def show_msg(self, msg):
-        QMessageBox.information(self, "提示信息", f"{msg}        ", QMessageBox.Ok, QMessageBox.Ok)
 
     """
-    获取数据库连接
-    self : 主窗口
-    """
+   获取数据库连接
+   self : 主窗口
+   """
 
     @staticmethod
     def get_connection(self):
-        if Utils.connection is not None:
-            return Utils.connection
-        Utils.connection = pymysql.connect(
+        if DbUtil.connection is not None:
+            return DbUtil.connection
+        DbUtil.connection = pymysql.connect(
             # 数据库主机名
             host=self.ui.host.text(),
             # 数据库端口号，默认为3306
@@ -40,20 +28,20 @@ class Utils(object):
             # 字符编码
             charset='utf8'
         )
-        return Utils.connection
+        return DbUtil.connection
 
     @staticmethod
     def get_cursor():
-        if Utils.cursor is not None:
-            return Utils.cursor
+        if DbUtil.cursor is not None:
+            return DbUtil.cursor
         else:
-            if Utils.connection is None:
-                Utils.connection = Utils.get_connection()
-                Utils.cursor = Utils.connection.cursor()
-                return Utils.cursor
+            if DbUtil.connection is None:
+                DbUtil.connection = DbUtil.get_connection()
+                DbUtil.cursor = DbUtil.connection.cursor()
+                return DbUtil.cursor
             else:
-                Utils.cursor = Utils.connection.cursor()
-                return Utils.cursor
+                DbUtil.cursor = DbUtil.connection.cursor()
+                return DbUtil.cursor
 
     """
     获取sql语句
@@ -75,7 +63,7 @@ class Utils(object):
                     column_name = tab_header[i][0]
                     sql += f'`{column_name}` = %s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(Utils.deal_data(row_data[i], data_type))
+                    sql_list.append(DbUtil.deal_data(row_data[i], data_type))
 
                 if sql.endswith(', '):
                     sql = sql[:-2]
@@ -110,7 +98,7 @@ class Utils(object):
                 for i in range(len(tab_header)):
                     sql += '%s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(Utils.deal_data(row_data[i], data_type))
+                    sql_list.append(DbUtil.deal_data(row_data[i], data_type))
                 if sql.endswith(', '):
                     sql = sql[:-2]
                 sql += ')'
@@ -163,19 +151,3 @@ class Utils(object):
                 raise Exception(f'输入日期格式异常，正确示例: 2020-01-01')
         else:
             return data
-
-    @staticmethod
-    def get_manger_self():
-        return Utils.manger
-
-    @staticmethod
-    def set_manger_self(self):
-        Utils.manger = self
-
-    @staticmethod
-    def get_app_self():
-        return Utils.app
-
-    @staticmethod
-    def set_app_self(self):
-        Utils.app = self

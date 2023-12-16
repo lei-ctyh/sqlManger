@@ -1,23 +1,23 @@
-import pymysql
 import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIntValidator
+from PyQt5.QtGui import QStandardItem, QIntValidator
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
 from qdarkstyle import LightPalette, DarkPalette
 from qt_material import apply_stylesheet, list_themes
 
-from UpdateItemModel import UpdateItemModel
-from Utils import Utils
-from addrowdialog_ui import Ui_Dialog
-from sqlManger_ui import Ui_MainWindow
+from model.UpdateItemModel import UpdateItemModel
+from ui.addrowdialog_ui import Ui_Dialog
+from ui.sqlManger_ui import Ui_MainWindow
+from utils.BusinessUtil import BusinessUtil
+from utils.ContainerUtil import ContainerUtil
+from utils.DbUtil import DbUtil
 
 
-# SqlQueryMoedl和QSqlQuery联合使用;
 class Manger(QMainWindow):
     def __init__(self, parent=None):
         super(Manger, self).__init__(parent)
-        Utils.set_manger_self(self)
+        ContainerUtil.set_manger_self(self)
         self.db = None
         # 数据库表面板参数
         self.tab_header = []
@@ -60,7 +60,7 @@ class Manger(QMainWindow):
 
     def conn_database(self):
         try:
-            connection = Utils.get_connection(self)
+            connection = DbUtil.get_connection(self)
             cursor = connection.cursor()
 
             sql = "SHOW DATABASES WHERE `Database` NOT IN ('information_schema', 'performance_schema','mysql', 'sys')"
@@ -73,22 +73,22 @@ class Manger(QMainWindow):
 
             # 开启事务
             cursor.execute("BEGIN")
-            Utils.show_msg(self, "数据库链接成功!")
+            BusinessUtil.show_msg(self, "数据库链接成功!")
         except Exception as e:
-            Utils.show_msg(self, f"数据库链接异常!{e}")
+            BusinessUtil.show_msg(self, f"数据库链接异常!{e}")
 
     def execute_query(self):
         try:
-            connection = Utils.get_connection(self)
+            connection = DbUtil.get_connection(self)
             cursor = connection.cursor()
             connection.rollback()
             if connection is None:
-                Utils.show_msg(self, "请先连接数据库!")
+                BusinessUtil.show_msg(self, "请先连接数据库!")
             else:
                 query_sql = f"select * from `{self.ui.tablename.currentText()}`"
                 query_header_sql = f"select COLUMN_NAME, COLUMN_COMMENT,  COLUMN_KEY,DATA_TYPE from information_schema.columns where table_schema = '{self.ui.database.currentText()}' and table_name = '{self.ui.tablename.currentText()}' ORDER BY  ORDINAL_POSITION"
                 if self.ui.tablename.currentText() == "":
-                    Utils.show_msg(self, "请选择要查询的表格!")
+                    BusinessUtil.show_msg(self, "请选择要查询的表格!")
                 else:
                     model = UpdateItemModel()
                     # 加载表头
@@ -111,7 +111,7 @@ class Manger(QMainWindow):
                             col = QStandardItem(str(colTuple))
                             row.append(col)
                         model.appendRow(row)
-                        self.load_progress_bar(((index + 1) / len(result)) * 100)
+                        self.ui.progressBar.setProperty("value", ((index + 1) / len(result)) * 100)
 
                     self.ui.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
                     self.ui.tableView.setSortingEnabled(False)
@@ -120,16 +120,16 @@ class Manger(QMainWindow):
                     self.ui.tableView.setModel(model)
 
         except Exception as e:
-            Utils.show_msg(self, f"查询失败:{e}")
+            BusinessUtil.show_msg(self, f"查询失败:{e}")
 
     def rollback_database(self):
-        Utils.get_connection(self).rollback()
-        Utils.show_msg(self, "事务回滚成功!")
+        DbUtil.get_connection(self).rollback()
+        BusinessUtil.show_msg(self, "事务回滚成功!")
         self.execute_query()
 
     def commit_database(self):
-        Utils.get_connection(self).commit()
-        Utils.show_msg(self, "事务提交成功!")
+        DbUtil.get_connection(self).commit()
+        BusinessUtil.show_msg(self, "事务提交成功!")
 
     def change_database(self):
         try:
@@ -138,7 +138,7 @@ class Manger(QMainWindow):
             # 数据库为空代表正在进行数据库连接, 无效切换数据库
             if cur_database == "":
                 return
-            connection = Utils.get_connection(self)
+            connection = DbUtil.get_connection(self)
             connection.select_db(cur_database)
             cursor = connection.cursor()
 
@@ -150,19 +150,16 @@ class Manger(QMainWindow):
                     self.ui.tablename.addItem(i[0])
             # 清空tableView数据
             self.ui.tableView.setModel(None)
-            self.load_progress_bar(0)
+            self.ui.progressBar.setProperty("value", 0)
         except Exception as e:
-            Utils.show_msg(self, f"切换数据库失败:{e}")
-
-    def load_progress_bar(self, progress):
-        self.ui.progressBar.setProperty("value", progress)
+            BusinessUtil.show_msg(self, f"切换数据库失败:{e}")
 
     def display_table_menu(self, pos):
         # 判断数据加载进度是否是100%
         if self.ui.progressBar.value() == 0:
             return
         if self.ui.progressBar.value() != 100:
-            Utils.show_msg(self, "数据加载中, 请稍后再试!")
+            BusinessUtil.show_msg(self, "数据加载中, 请稍后再试!")
             return
 
         # 获取当前行号
@@ -206,16 +203,16 @@ class Manger(QMainWindow):
                 col_data = getattr(ui, f"lineEdit_{col_name}").text()
                 row_data.append(col_data)
                 row.append(QStandardItem(str(col_data)))
-            sql_and_list = Utils.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), row_data, [],
-                                                  "add")
-            cursor = Utils.get_cursor()
+            sql_and_list = DbUtil.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), row_data, [],
+                                                   "add")
+            cursor = DbUtil.get_cursor()
             print("插入数据")
             print(sql_and_list)
             cursor.execute(sql_and_list[0], sql_and_list[1])
             self.ui.tableView.model().appendRow(row)
-            Utils.show_msg(self, "保存成功!")
+            BusinessUtil.show_msg(self, "保存成功!")
         except Exception as e:
-            Utils.show_msg(self, f"保存失败:{e}")
+            BusinessUtil.show_msg(self, f"保存失败:{e}")
 
     def delete_data(self, row_index):
         # 删除数据
@@ -223,19 +220,22 @@ class Manger(QMainWindow):
             old_data = []
             for i in range(len(self.tab_header)):
                 old_data.append(self.ui.tableView.model().item(self.ui.tableView.currentIndex().row(), i).text())
-            sql_and_list = Utils.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), [], old_data, "del")
-            cursor = Utils.get_cursor()
+            sql_and_list = DbUtil.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), [], old_data,
+                                                   "del")
+            cursor = DbUtil.get_cursor()
             print("删除数据")
             print(sql_and_list)
             cursor.execute(sql_and_list[0], sql_and_list[1])
             self.ui.tableView.model().removeRow(row_index)
         except Exception as e:
-            Utils.show_msg(self, f"删除失败:{e}")
+            BusinessUtil.show_msg(self, f"删除失败:{e}")
 
     def change_theme(self):
         if self.ui.themeComboBox.currentText() == "Dark":
-            Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=DarkPalette()))
+            ContainerUtil.get_app_self().setStyleSheet(
+                qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=DarkPalette()))
         elif self.ui.themeComboBox.currentText() == "Light":
-            Utils.get_app_self().setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=LightPalette()))
+            ContainerUtil.get_app_self().setStyleSheet(
+                qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=LightPalette()))
         else:
-            apply_stylesheet(Utils.get_app_self(), theme=self.ui.themeComboBox.currentText() + ".xml")
+            apply_stylesheet(ContainerUtil.get_app_self(), theme=self.ui.themeComboBox.currentText() + ".xml")

@@ -18,20 +18,12 @@ class UpdateItemModel(QStandardItemModel):
                 else:
                     row_data.append(
                         manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
-                old_data.append(
-                    manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
+                old_data.append(manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
 
-            sql_s_list = DbUtil.get_sql_and_list(manger_self.tab_header, manger_self.ui.tablename.currentText(),
-                                                row_data,old_data, "edit")
-            cursor = DbUtil.get_cursor()
-            print("修改数据")
-            print(sql_s_list)
-            cursor.execute(sql_s_list[0], sql_s_list[1])
+            DbUtil.crud_data(manger_self.tab_header, manger_self.ui.tablename.currentText(), row_data, old_data, "edit")
         except Exception as e:
             manger_self = ContainerUtil.get_manger_self()
             BusinessUtil.show_msg(manger_self, f"修改失败:{e}")
             return super().setData(index, index.data(), role)
 
         return super().setData(index, value, role)
-
-

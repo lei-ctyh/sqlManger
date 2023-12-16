@@ -24,7 +24,7 @@ class DbUtil(object):
             # 数据库用户名
             user=self.ui.username.text(),
             # 数据库密码
-            passwd=self.ui.pwd.text(),
+            passwd="123456",
             # 字符编码
             charset='utf8'
         )
@@ -51,7 +51,7 @@ class DbUtil(object):
     """
 
     @staticmethod
-    def get_sql_and_list(tab_header, table_name, row_data, old_row_data, opt):
+    def __get_sql_and_list(tab_header, table_name, row_data, old_row_data, opt):
         sql_list = []
         sql = ''
         if not tab_header:
@@ -63,7 +63,7 @@ class DbUtil(object):
                     column_name = tab_header[i][0]
                     sql += f'`{column_name}` = %s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(DbUtil.deal_data(row_data[i], data_type))
+                    sql_list.append(DbUtil.__deal_data(row_data[i], data_type))
 
                 if sql.endswith(', '):
                     sql = sql[:-2]
@@ -98,7 +98,7 @@ class DbUtil(object):
                 for i in range(len(tab_header)):
                     sql += '%s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(DbUtil.deal_data(row_data[i], data_type))
+                    sql_list.append(DbUtil.__deal_data(row_data[i], data_type))
                 if sql.endswith(', '):
                     sql = sql[:-2]
                 sql += ')'
@@ -125,7 +125,7 @@ class DbUtil(object):
             return sql, sql_list
 
     @staticmethod
-    def deal_data(data, data_type):
+    def __deal_data(data, data_type):
         if data == '':
             return None
         if data_type == 'int':
@@ -151,3 +151,11 @@ class DbUtil(object):
                 raise Exception(f'输入日期格式异常，正确示例: 2020-01-01')
         else:
             return data
+
+    @staticmethod
+    def crud_data(tab_header, table_name, row_data, old_row_data, opt):
+        sql_and_list = DbUtil.__get_sql_and_list(tab_header, table_name, row_data, old_row_data, opt)
+        cursor = DbUtil.get_cursor()
+        print(f"{opt}数据")
+        print(sql_and_list)
+        cursor.execute(sql_and_list[0], sql_and_list[1])

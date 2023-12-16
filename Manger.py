@@ -1,7 +1,9 @@
+import json
+
 import qdarkstyle
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItem, QIntValidator
+from PyQt5.QtCore import Qt, QDate, QDateTime
+from PyQt5.QtGui import QStandardItem, QIntValidator, QColor, QStandardItemModel
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
 from qdarkstyle import LightPalette, DarkPalette
 from qt_material import apply_stylesheet, list_themes
@@ -82,16 +84,25 @@ class Manger(QMainWindow):
             connection = DbUtil.get_connection(self)
             cursor = connection.cursor()
             connection.rollback()
+
             if connection is None:
                 BusinessUtil.show_msg(self, "请先连接数据库!")
             else:
-                query_sql = f"select * from `{self.ui.tablename.currentText()}`"
-                query_header_sql = f"select COLUMN_NAME, COLUMN_COMMENT,  COLUMN_KEY,DATA_TYPE from information_schema.columns where table_schema = '{self.ui.database.currentText()}' and table_name = '{self.ui.tablename.currentText()}' ORDER BY  ORDINAL_POSITION"
+                query_sql = f"SELECT * FROM `{self.ui.tablename.currentText()}`"
+                query_header_sql = (
+                    f"SELECT COLUMN_NAME, COLUMN_COMMENT, COLUMN_KEY, DATA_TYPE "
+                    f"FROM information_schema.columns "
+                    f"WHERE table_schema = '{self.ui.database.currentText()}' "
+                    f"AND table_name = '{self.ui.tablename.currentText()}' "
+                    f"ORDER BY ORDINAL_POSITION"
+                )
+
                 if self.ui.tablename.currentText() == "":
                     BusinessUtil.show_msg(self, "请选择要查询的表格!")
                 else:
-                    model = UpdateItemModel()
-                    # 加载表头
+                    model = QStandardItemModel()
+
+                    # Load table header
                     cursor.execute(query_header_sql)
                     self.tab_header = []
                     header = []
@@ -100,16 +111,42 @@ class Manger(QMainWindow):
                         header.append(f"  {col[0]}  ")
                     model.setHorizontalHeaderLabels(header)
 
-                    # 加载数据
+                    # Load data
                     cursor.execute(query_sql)
                     result = cursor.fetchall()
                     for index, value in enumerate(result):
                         row = []
-                        for colTuple in value:
-                            if colTuple is None:
-                                colTuple = ""
-                            col = QStandardItem(str(colTuple))
+                        for col_val, col_info in zip(value, self.tab_header):
+                            data_type = col_info[3].upper()
+                            original_value = col_val
+                            col = QStandardItem()
+                            if col_val is None:
+                                display_value = ""
+                                col.setData(display_value, Qt.DisplayRole)
+                            # Check if the column is of data type 'DATE' or similar
+                            elif data_type in ['DATE']:
+                                display_value = QDate.fromString(str(col_val), 'yyyy-MM-dd')
+                                col.setData(display_value, Qt.DisplayRole)
+                            elif data_type in ['DATETIME']:
+                                display_value = QDateTime.fromString(str(col_val), 'yyyy-MM-dd HH:mm:ss')
+                                col.setData(display_value, Qt.DisplayRole)
+                            elif data_type in ['INT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT']:
+                                col.setData(int(col_val), Qt.DisplayRole)
+                            elif data_type in ['FLOAT', 'DOUBLE', 'DECIMAL']:
+                                col.setData(float(col_val), Qt.DisplayRole)
+                            elif data_type in ['CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT']:
+                                col.setData(str(col_val), Qt.DisplayRole)
+                            elif data_type in ['TINYBLOB', 'BLOB', 'MEDIUMBLOB', 'LONGBLOB']:
+                                col.setData(bytes(col_val), Qt.DisplayRole)
+                            elif data_type in ['ENUM', 'SET']:
+                                col.setData(str(col_val), Qt.DisplayRole)
+                            elif data_type in ['BIT']:
+                                col.setData(bool(col_val), Qt.DisplayRole)
+                            elif data_type in ['JSON']:
+                                col.setData(json.loads(col_val), Qt.DisplayRole)
+                            col.setData(original_value, Qt.UserRole)
                             row.append(col)
+
                         model.appendRow(row)
                         self.ui.progressBar.setProperty("value", ((index + 1) / len(result)) * 100)
 
@@ -118,9 +155,10 @@ class Manger(QMainWindow):
                     self.ui.tableView.setAlternatingRowColors(True)
                     self.ui.tableView.verticalHeader().setVisible(False)
                     self.ui.tableView.setModel(model)
+                    model.dataChanged.connect(self.handle_item_changed)
 
         except Exception as e:
-            BusinessUtil.show_msg(self, f"查询失败:{e}")
+            BusinessUtil.show_msg(self, f"查询失败: {e}")
 
     def rollback_database(self):
         DbUtil.get_connection(self).rollback()
@@ -203,12 +241,7 @@ class Manger(QMainWindow):
                 col_data = getattr(ui, f"lineEdit_{col_name}").text()
                 row_data.append(col_data)
                 row.append(QStandardItem(str(col_data)))
-            sql_and_list = DbUtil.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), row_data, [],
-                                                   "add")
-            cursor = DbUtil.get_cursor()
-            print("插入数据")
-            print(sql_and_list)
-            cursor.execute(sql_and_list[0], sql_and_list[1])
+            DbUtil.crud_data(self.tab_header, self.ui.tablename.currentText(), row_data, [], "add")
             self.ui.tableView.model().appendRow(row)
             BusinessUtil.show_msg(self, "保存成功!")
         except Exception as e:
@@ -220,12 +253,7 @@ class Manger(QMainWindow):
             old_data = []
             for i in range(len(self.tab_header)):
                 old_data.append(self.ui.tableView.model().item(self.ui.tableView.currentIndex().row(), i).text())
-            sql_and_list = DbUtil.get_sql_and_list(self.tab_header, self.ui.tablename.currentText(), [], old_data,
-                                                   "del")
-            cursor = DbUtil.get_cursor()
-            print("删除数据")
-            print(sql_and_list)
-            cursor.execute(sql_and_list[0], sql_and_list[1])
+            DbUtil.crud_data(self.tab_header, self.ui.tablename.currentText(), [], old_data, "del")
             self.ui.tableView.model().removeRow(row_index)
         except Exception as e:
             BusinessUtil.show_msg(self, f"删除失败:{e}")
@@ -239,3 +267,30 @@ class Manger(QMainWindow):
                 qdarkstyle.load_stylesheet(qt_api='pyqt5', palette=LightPalette()))
         else:
             apply_stylesheet(ContainerUtil.get_app_self(), theme=self.ui.themeComboBox.currentText() + ".xml")
+
+    def handle_item_changed(self, item):
+        manger_self = ContainerUtil.get_manger_self()
+        col_index = manger_self.ui.tableView.currentIndex().column()
+        row_index = manger_self.ui.tableView.currentIndex().row()
+        q_item = manger_self.ui.tableView.model().item(row_index, col_index)
+        new_value = item.data(Qt.DisplayRole)
+        old_value = item.data(Qt.UserRole)
+        print(new_value, old_value)
+        q_item.setData(new_value, Qt.UserRole)
+
+        # old_data = []
+        # row_data = []
+        # for i in range(len(manger_self.tab_header)):
+        #     old_data.append(manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
+        # print(old_data)
+        #
+        # new_value = item.data(Qt.DisplayRole)
+        # old_value = item.data(Qt.UserRole)  # Assuming the old value is stored in UserRole
+        # print(new_value, old_value)
+        #
+        # # 更新数据
+        # if new_value != old_value:
+        #     # 更新原值 Qt.UserRole
+        #     for i in range(len(manger_self.tab_header)):
+        #         if manger_self.tab_header[i][0] == item.text():
+        #             manger_self.tab_header[i][1] = new_value

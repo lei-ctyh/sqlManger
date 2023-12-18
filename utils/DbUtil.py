@@ -63,7 +63,7 @@ class DbUtil(object):
                     column_name = tab_header[i][0]
                     sql += f'`{column_name}` = %s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(DbUtil.__deal_data(row_data[i], data_type))
+                    sql_list.append(DbUtil.deal_data(data_type, row_data[i], old_row_data[i], ))
 
                 if sql.endswith(', '):
                     sql = sql[:-2]
@@ -98,7 +98,7 @@ class DbUtil(object):
                 for i in range(len(tab_header)):
                     sql += '%s, '
                     data_type = tab_header[i][3]
-                    sql_list.append(DbUtil.__deal_data(row_data[i], data_type))
+                    sql_list.append(row_data[i])
                 if sql.endswith(', '):
                     sql = sql[:-2]
                 sql += ')'
@@ -124,33 +124,29 @@ class DbUtil(object):
                 sql += where_sql
             return sql, sql_list
 
+    """
+    主要作用把前台的展示数据转换成数据库可用
+    """
+
     @staticmethod
-    def __deal_data(data, data_type):
-        if data == '':
+    def deal_data(data_type, new_data, old_data=None):
+        if new_data == '' and old_data is None:
             return None
         if data_type == 'int':
-            return int(data)
+            return int(new_data)
         elif data_type == 'float':
-            return float(data)
+            return float(new_data)
         elif data_type == 'datetime':
-            try:
-                return datetime.datetime.strptime(data, '%Y-%m-%d %H:%M:%S')
-            # 捕获日期格式化异常""
-            except ValueError:
-                raise Exception(f'输入日期格式异常，正确示例: 2020-01-01 12:12:12')  # except Exception as e:
-
+            # QtDateTime 转换成 python datetime
+            datatime_str = new_data.toString("yyyy-MM-dd hh:mm:ss")
+            return datetime.datetime.strptime(datatime_str, "%Y-%m-%d %H:%M:%S")
         elif data_type == 'timestamp':
             return datetime.datetime.now()
         elif data_type == 'date':
-            try:
-                if data == '':
-                    return None
-                return datetime.datetime.strptime(data, '%Y-%m-%d')
-            # 捕获日期格式化异常""
-            except ValueError:
-                raise Exception(f'输入日期格式异常，正确示例: 2020-01-01')
+            datatime_str = new_data.toString("yyyy-MM-dd")
+            return datetime.datetime.strptime(datatime_str, "%Y-%m-%d").date()
         else:
-            return data
+            return new_data
 
     @staticmethod
     def crud_data(tab_header, table_name, row_data, old_row_data, opt):

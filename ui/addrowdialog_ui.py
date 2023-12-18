@@ -19,7 +19,7 @@ class Ui_Dialog(object):
         self.add_row_but = QtWidgets.QDialogButtonBox(Dialog)
         self.add_row_but.setGeometry(QtCore.QRect(30, 260, 341, 32))
         self.add_row_but.setOrientation(QtCore.Qt.Horizontal)
-        self.add_row_but.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.add_row_but.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.add_row_but.setObjectName("add_row_but")
         self.scrollArea = QtWidgets.QScrollArea(Dialog)
         self.scrollArea.setGeometry(QtCore.QRect(20, 10, 361, 241))
@@ -33,12 +33,29 @@ class Ui_Dialog(object):
 
         # 动态添加表单
         for i, item in enumerate(form_items):
-            setattr(self, f"label_{item}", QtWidgets.QLabel(self.scrollAreaWidgetContents))
-            getattr(self, f"label_{item}").setObjectName(f"label_{item}")
-            self.formLayout.setWidget(i, QtWidgets.QFormLayout.LabelRole,  getattr(self, f"label_{item}"))
-            setattr(self, f"lineEdit_{item}", QtWidgets.QLineEdit(self.scrollAreaWidgetContents))
-            getattr(self, f"lineEdit_{item}").setObjectName(f"lineEdit_{item}")
-            self.formLayout.setWidget(i, QtWidgets.QFormLayout.FieldRole, getattr(self, f"lineEdit_{item}"))
+            column_name = item[0]
+            column_comment = item[1]
+            column_key = item[2]
+            data_type = item[3]
+            setattr(self, f"label_{column_name}", QtWidgets.QLabel(self.scrollAreaWidgetContents))
+            getattr(self, f"label_{column_name}").setObjectName(f"label_{column_name}")
+            self.formLayout.setWidget(i, QtWidgets.QFormLayout.LabelRole, getattr(self, f"label_{column_name}"))
+            setattr(self, f"lineEdit_{column_name}", QtWidgets.QLineEdit(self.scrollAreaWidgetContents))
+            getattr(self, f"lineEdit_{column_name}").setObjectName(f"lineEdit_{item}")
+            getattr(self, f"lineEdit_{column_name}").setPlaceholderText(f"{column_comment}")
+
+            if column_key == 'PRI':
+                getattr(self, f"lineEdit_{column_name}").setPlaceholderText(f"主键")
+            if data_type == 'int':
+                getattr(self, f"lineEdit_{column_name}").setValidator(QtGui.QIntValidator())
+            elif data_type == 'float':
+                getattr(self, f"lineEdit_{column_name}").setValidator(QtGui.QDoubleValidator())
+            elif data_type == 'date':
+                getattr(self, f"lineEdit_{column_name}").setInputMask("0000-00-00")
+            elif data_type == 'datetime':
+                getattr(self, f"lineEdit_{column_name}").setInputMask("0000-00-00 00:00:00")
+
+            self.formLayout.setWidget(i, QtWidgets.QFormLayout.FieldRole, getattr(self, f"lineEdit_{column_name}"))
 
         # self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
         # self.label.setObjectName("label")
@@ -55,19 +72,20 @@ class Ui_Dialog(object):
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.retranslateUi(Dialog)
-        self.add_row_but.accepted.connect(Dialog.accept) # type: ignore
-        self.add_row_but.rejected.connect(Dialog.reject) # type: ignore
+        self.add_row_but.accepted.connect(Dialog.accept)  # type: ignore
+        self.add_row_but.rejected.connect(Dialog.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
         for i, item in enumerate(self.form_items):
-            getattr(self, f"label_{item}").setText(_translate("Dialog", item))
+            getattr(self, f"label_{item[0]}").setText(_translate("Dialog", item[0]))
 
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()

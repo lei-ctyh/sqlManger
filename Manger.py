@@ -1,14 +1,14 @@
+import datetime
 import json
 
 import qdarkstyle
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QDate, QDateTime
 from PyQt5.QtGui import QStandardItem, QIntValidator, QColor, QStandardItemModel
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLineEdit, QMenu
 from qdarkstyle import LightPalette, DarkPalette
 from qt_material import apply_stylesheet, list_themes
 
-from model.UpdateItemModel import UpdateItemModel
 from ui.addrowdialog_ui import Ui_Dialog
 from ui.sqlManger_ui import Ui_MainWindow
 from utils.BusinessUtil import BusinessUtil
@@ -229,7 +229,7 @@ class Manger(QMainWindow):
             ui = Ui_Dialog()
             form_items = []
             for colInfo in self.tab_header:
-                form_items.append(colInfo[0])
+                form_items.append(colInfo)
             ui.setupUi(Dialog, form_items)
             is_ok = Dialog.exec()
             if is_ok == 0:
@@ -239,8 +239,37 @@ class Manger(QMainWindow):
             for colInfo in self.tab_header:
                 col_name = colInfo[0]
                 col_data = getattr(ui, f"lineEdit_{col_name}").text()
-                row_data.append(col_data)
-                row.append(QStandardItem(str(col_data)))
+                item = QStandardItem()
+                if colInfo[3] == 'int':
+                    if col_data == "--":
+                        item.setData(None, Qt.UserRole)
+                        item.setData("", Qt.DisplayRole)
+                    else:
+                        item.setData(int(col_data), Qt.DisplayRole)
+                        item.setData(int(col_data), Qt.UserRole)
+                elif colInfo[3] == 'float':
+                    item.setData(float(col_data), Qt.DisplayRole)
+                    item.setData(float(col_data), Qt.UserRole)
+                elif colInfo[3] == 'date':
+                    if col_data == "--":
+                        item.setData(None, Qt.UserRole)
+                        item.setData(QDate(), Qt.DisplayRole)
+                    else:
+                        item.setData(datetime.datetime.strptime(col_data, "%Y-%m-%d"), Qt.UserRole)
+                        item.setData(QDateTime.fromString(str(col_data), 'yyyy-MM-dd').date(), Qt.DisplayRole)
+
+                elif colInfo[3] == 'datetime':
+                    if col_data == "-- ::":
+                        item.setData(None, Qt.UserRole)
+                        item.setData(QDateTime(), Qt.DisplayRole)
+                    else:
+                        item.setData(datetime.datetime.strptime(col_data, "%Y-%m-%d %H:%M:%S"), Qt.UserRole)
+                        item.setData(QDateTime.fromString(str(col_data), 'yyyy-MM-dd HH:mm:ss'), Qt.DisplayRole)
+                else:
+                    item.setData(str(col_data), Qt.DisplayRole)
+                    item.setData(str(col_data), Qt.UserRole)
+                row_data.append(item.data(Qt.UserRole))
+                row.append(item)
             DbUtil.crud_data(self.tab_header, self.ui.tablename.currentText(), row_data, [], "add")
             self.ui.tableView.model().appendRow(row)
             BusinessUtil.show_msg(self, "保存成功!")
@@ -269,28 +298,26 @@ class Manger(QMainWindow):
             apply_stylesheet(ContainerUtil.get_app_self(), theme=self.ui.themeComboBox.currentText() + ".xml")
 
     def handle_item_changed(self, item):
-        manger_self = ContainerUtil.get_manger_self()
-        col_index = manger_self.ui.tableView.currentIndex().column()
-        row_index = manger_self.ui.tableView.currentIndex().row()
-        q_item = manger_self.ui.tableView.model().item(row_index, col_index)
-        new_value = item.data(Qt.DisplayRole)
-        old_value = item.data(Qt.UserRole)
-        print(new_value, old_value)
-        q_item.setData(new_value, Qt.UserRole)
+        try:
+            manger_self = ContainerUtil.get_manger_self()
 
-        # old_data = []
-        # row_data = []
-        # for i in range(len(manger_self.tab_header)):
-        #     old_data.append(manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).text())
-        # print(old_data)
-        #
-        # new_value = item.data(Qt.DisplayRole)
-        # old_value = item.data(Qt.UserRole)  # Assuming the old value is stored in UserRole
-        # print(new_value, old_value)
-        #
-        # # 更新数据
-        # if new_value != old_value:
-        #     # 更新原值 Qt.UserRole
-        #     for i in range(len(manger_self.tab_header)):
-        #         if manger_self.tab_header[i][0] == item.text():
-        #             manger_self.tab_header[i][1] = new_value
+            old_data = []
+            row_data = []
+            for i in range(len(manger_self.tab_header)):
+                original_value = manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).data(Qt.UserRole)
+                display_value = manger_self.ui.tableView.model().item(manger_self.ui.tableView.currentIndex().row(), i).data(Qt.DisplayRole)
+                row_data.append(display_value)
+                old_data.append(original_value)
+            DbUtil.crud_data(manger_self.tab_header, manger_self.ui.tablename.currentText(), row_data, old_data, "edit")
+
+            col_index = manger_self.ui.tableView.currentIndex().column()
+            row_index = manger_self.ui.tableView.currentIndex().row()
+
+            data_type = self.tab_header[col_index]
+            q_item = manger_self.ui.tableView.model().item(row_index, col_index)
+            old_data = q_item.data(Qt.UserRole)
+            new_data = q_item.data(Qt.DisplayRole)
+            q_item.setData(DbUtil.deal_data(data_type, new_data, old_data), Qt.UserRole)
+        except Exception as e:
+            manger_self = ContainerUtil.get_manger_self()
+            BusinessUtil.show_msg(manger_self, f"修改失败:{e}")
